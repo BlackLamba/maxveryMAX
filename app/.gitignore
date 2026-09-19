@@ -1,0 +1,60 @@
+# maxveryMAX — корневой .gitignore (действует на весь репозиторий: app/, docs/, Аналитик/)
+
+# --- секреты: .env никогда не коммитится, шаблон .env.example — коммитится ---
+.env
+.env.*
+!.env.example
+
+# --- python ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.python-version
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- локальные БД и тестовые артефакты (backend/dev.db, backend/.pytest_db/) ---
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+.pytest_db/
+
+# --- node (miniapp) ---
+node_modules/
+dist/
+build/
+.vite/
+.parcel-cache/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- IDE / ОС ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- логи, дампы, временные ---
+*.log
+logs/
+*.dump
+*.sql.gz
+*.tmp
+*.bak
+~$*
+
+# --- docker ---
+docker-compose.override.yml

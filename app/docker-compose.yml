@@ -1,0 +1,85 @@
+# maxveryMAX — подъём одной командой.
+#
+#   docker compose up --build        # postgres + backend (базовый сценарий)
+#   docker compose --profile full up # + worker, bot, miniapp (когда их Dockerfile готовы)
+#
+# Секреты — в .env (см. .env.example); в compose только заглушки по умолчанию.
+name: maxveryMAX
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-maxuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-maxpass}
+      POSTGRES_DB: ${POSTGRES_DB:-maxevents}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-maxuser} -d ${POSTGRES_DB:-maxevents}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-maxuser}:${POSTGRES_PASSWORD:-maxpass}@postgres:5432/${POSTGRES_DB:-maxevents}
+      APP_ENV: ${APP_ENV:-dev}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # миграции применяются entrypoint'ом (см. backend/Dockerfile)
+
+  # --- Остальные сервисы: профиль "full" -------------------------------------
+  # Их Dockerfile появляются у владельцев модулей (worker — Олежа, bot — Антон,
+  # miniapp — Дима). Базовый `docker compose up` не ломается, пока они не готовы.
+
+  worker:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-maxuser}:${POSTGRES_PASSWORD:-maxpass}@postgres:5432/${POSTGRES_DB:-maxevents}
+      TIMEPAD_API_TOKEN: ${TIMEPAD_API_TOKEN:-}
+      KUDAGO_API_TOKEN: ${KUDAGO_API_TOKEN:-}
+      SYNC_INTERVAL_MINUTES: ${SYNC_INTERVAL_MINUTES:-60}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bot:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    environment:
+      MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
+      BOT_NAME: ${BOT_NAME:-maxveryMAX}
+      BACKEND_URL: http://backend:8000
+      MINIAPP_BASE_URL: ${MINIAPP_BASE_URL:-http://localhost:3000}
+    depends_on:
+      - backend
+
+  miniapp:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: miniapp/Dockerfile
+    ports:
+      - "${MINIAPP_PORT:-3000}:80"
+    depends_on:
+      - backend
+    # nginx.conf мини-аппа проксирует /api → backend:8000 (см. app/README.md, 5.4)
+
+volumes:
+  pgdata:
