@@ -1,0 +1,5 @@
+# --- MAX Bot API (официальная библиотека, см. https://dev.max.ru/docs-api/) --
+maxapi>=1.2.2,<2.0
+
+# --- Асинхронный HTTP-клиент к backend'у ---
+httpx>=0.27,<1.0

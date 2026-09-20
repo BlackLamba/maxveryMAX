@@ -67,6 +67,8 @@ services:
       BOT_NAME: ${BOT_NAME:-maxveryMAX}
       BACKEND_URL: http://backend:8000
       MINIAPP_BASE_URL: ${MINIAPP_BASE_URL:-http://localhost:3000}
+      NOTIFICATIONS_POLL_INTERVAL_SECONDS: ${NOTIFICATIONS_POLL_INTERVAL_SECONDS:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       - backend
 
