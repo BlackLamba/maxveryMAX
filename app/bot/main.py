@@ -69,6 +69,12 @@ async def _main_async() -> None:
             await notifications_task
         except asyncio.CancelledError:
             pass
+        # Корректно закрываем aiohttp-сессию maxapi, чтобы не было ворнинга
+        # «Unclosed client session» при остановке через Ctrl+C.
+        try:
+            await bot.close_session()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Не удалось закрыть сессию Bot API: %s", exc)
         await api.stop()
 
 
