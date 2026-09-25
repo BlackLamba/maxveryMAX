@@ -6,6 +6,7 @@ import logging
 from .config import ENABLED_PROVIDERS, SYNC_INTERVAL_MINUTES
 from .db import SessionLocal
 from .providers import MockProvider
+from .providers import KudaGoProvider, MockProvider
 from .repository import upsert_many
 
 log = logging.getLogger(__name__)
@@ -16,9 +17,10 @@ def _build_providers() -> list:
     for name in ENABLED_PROVIDERS:
         if name == "mock":
             providers.append(MockProvider())
-        # kudago/timepad — когда появятся реализации
+        elif name == "kudago":
+            providers.append(KudaGoProvider())
+        # timepad — позже
     return providers
-
 
 async def run_once() -> int:
     providers = _build_providers()
