@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Токены дизайна — «Синий час» (DESIGN.md).
+   Палитра: Paper/Poster/Ink/Haze/Lamp/Night. Один акцент (Lamp) — всё
+   остальное сдержанное. Теней нет (плоская печать), градиентов нет.
+   ========================================================================== */
+
+:root {
+  /* --- Палитра (6 имён + производные тоники) --- */
+  --paper: #edf0f5;        /* сумеречная бумага — фон светлой темы */
+  --poster: #fafbfd;       /* лист афиши — поверхность карточки */
+  --ink: #14203a;          /* типографская краска — сине-чёрная ночь */
+  --haze: #55647e;         /* городская дымка — вторичный текст */
+  --lamp: #ffb02e;         /* натриевая лампа — ЕДИНСТВЕННЫЙ акцент */
+  --night: #101a2e;        /* синий час — фон тёмной темы */
+
+  --lamp-deep: #e89410;    /* нажатие на Lamp */
+  --lamp-soft: #ffe3b3;    /* подложка заметки «почему подходит» (светлая) */
+  --night-raise: #1b2740;  /* поверхности тёмной темы */
+  --night-deep: #0b1526;   /* корешок билета в тёмной теме */
+  --moon: #e9edf6;         /* текст на тёмном */
+  --haze-dark: #96a2bc;    /* вторичный текст на тёмном */
+
+  /* --- Семантика: светлая тема (по умолчанию) --- */
+  --bg: var(--paper);
+  --surface: var(--poster);
+  --surface-sunken: #e3e8f0;
+  --text: var(--ink);
+  --text-2: var(--haze);
+  --line: rgba(20, 32, 58, 0.14);
+  --line-strong: rgba(20, 32, 58, 0.3);
+  --accent: var(--lamp);
+  --accent-deep: var(--lamp-deep);
+  --on-accent: var(--ink);
+  --note-bg: var(--lamp-soft);
+  --note-text: #513d0f;
+  --note-line: var(--lamp-deep);
+  --stub-bg: var(--ink);          /* корешок билета: будущие дни */
+  --stub-text: var(--paper);
+  --stub-now-bg: var(--lamp);     /* корешок: сегодня / идёт сейчас — фонарь горит */
+  --stub-now-text: var(--ink);
+  --overlay: rgba(20, 32, 58, 0.45);
+  --focus-ring: var(--ink);       /* WCAG 2.4.11/2.4.13: контраст фокуса ≥3:1 —
+                                     Lamp на Paper дал бы лишь 1.6:1, поэтому в
+                                     светлой теме кольцо чернильное (14:1),
+                                     в тёмной — янтарное (9.5:1). DESIGN.md §5. */
+
+  /* --- Типографика (DESIGN.md §2) --- */
+  --font-display: 'Oswald', 'Roboto Condensed', 'Arial Narrow', sans-serif;
+  --font-text: 'Golos Text', 'Helvetica Neue', Arial, sans-serif;
+
+  /* --- Радиусы: форма билета, а не «SaaS-скругления всего» --- */
+  --r-ticket: 14px;
+  --r-ctl: 10px;
+  --r-pill: 999px;
+
+  /* --- Ритм --- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* --- Safe area (MAX/нотч) --- */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* --- Каркас ленты --- */
+  --stub-w: 64px;
+  --header-h: 48px;
+  --chips-h: 46px;
+  --nav-h: 56px;
+}
+
+html[data-theme='dark'] {
+  --bg: var(--night);
+  --surface: var(--night-raise);
+  --surface-sunken: #0c1424;
+  --text: var(--moon);
+  --text-2: var(--haze-dark);
+  --line: rgba(233, 237, 246, 0.16);
+  --line-strong: rgba(233, 237, 246, 0.34);
+  --accent: var(--lamp);
+  --accent-deep: var(--lamp);
+  --on-accent: var(--ink);
+  --note-bg: #31290f;
+  --note-text: #f0d9a6;
+  --note-line: var(--lamp);
+  --stub-bg: var(--night-deep);
+  --stub-text: var(--moon);
+  --stub-now-bg: var(--lamp);
+  --stub-now-text: var(--ink);
+  --overlay: rgba(5, 9, 18, 0.6);
+  --focus-ring: var(--lamp);
+}

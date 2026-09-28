@@ -229,30 +229,40 @@ worker/
 
 ```text
 miniapp/
-├── index.html
+├── DESIGN.md             # дизайн-план «Синий час»: палитра, типографика, layout,
+│                         #   чек-лист антипаттернов, правки по ходу реализации
+├── index.html            # MAX Bridge (st.max.ru/js/max-web-app.js) + тема до первой отрисовки
 ├── package.json / package-lock.json
-├── vite.config.ts        # dev-прокси /api → backend, настройки сборки
+├── vite.config.ts        # dev-прокси /api → backend; алиас @shared → app/shared
 ├── tsconfig.json
+├── .env.example          # VITE_API_URL (пусто = относительный /api), VITE_PROXY_TARGET
 ├── src/
-│   ├── main.tsx          # точка входа: <MaxUI> + HashRouter
-│   ├── App.tsx           # маршруты: список, карточка, избранное, фильтры
-│   ├── api/              # клиент к backend/ (базовый путь /api), обработка ошибок
-│   ├── pages/            # EventsList, EventDetails, Favorites, Filters
-│   ├── components/       # EventCard, FilterBar, SortBar, Skeletons,
-│   │                     #   EmptyState, ErrorState, Loader, ResultBanner
-│   ├── hooks/            # useEvents, useFilters, useFavorites
-│   ├── types/            # типы, синхронизированные со shared/models.py
-│   ├── utils/
-│   │   ├── launchParams.ts  # разбор start_param из window.WebApp + запасной ?query= для браузера
-│   │   ├── format.ts        # форматирование дат, цен, расстояний
-│   │   └── platform.ts      # MAX Bridge: platform, deviceName, initData
-│   └── styles/           # глобальные стили и токены
-├── public/               # статика: иконки, изображения-заглушки
+│   ├── main.tsx          # точка входа: <MaxUIProvider> + HashRouter
+│   ├── App.tsx           # маршруты + health-гейт: /api/health не отвечает →
+│   │                     #   отдельный экран «Сервис афиши не отвечает»
+│   ├── api/client.ts     # единый клиент: конверт {items,total,hint}, единые ошибки,
+│   │                     #   events/click/favorites/preferences/cities/categories/health
+│   ├── pages/            # EventsList, EventDetails, Favorites
+│   ├── components/       # TicketCard (билет с корешком и перфорацией), DateRuler,
+│   │                     #   FeedControls (чипы+сортировка), FilterSheet (bottom-sheet),
+│   │                     #   ActiveFilterChips, ListHeader, BottomNav, Icon,
+│   │                     #   StateViews (Skeletons/EmptyState/ErrorState/BackendDown/NotFound),
+│   │                     #   BannerHost (ResultBanner), MaxUIProvider (тема, user_id)
+│   ├── hooks/            # useEvents, useFilters (deep link → preferences → дефолты),
+│   │                     #   useFavorites, useHealth, useRefs
+│   ├── types/api.ts      # зеркало схем бэкенда: EventOut, EventFilters, Envelope, …
+│   ├── utils/            # launchParams.ts (start_param + ?query=), format.ts
+│   │                     #   (naive UTC из API → UTC+3), platform.ts (MAX Bridge),
+│   │                     #   texts.ts (все тексты интерфейса)
+│   └── styles/           # fonts.css (самохост woff2), tokens.css, global.css, app.css
+├── public/fonts/         # Oswald + Golos Text, сабсеты cyrillic/latin/latin-ext
 ├── Dockerfile            # сборка + раздача через nginx
 └── nginx.conf            # статика + прокси /api → backend:8000
 ```
 
 **Что должно быть готово:** экран списка, карточка события, фильтры и сортировки, избранное, обязательные состояния (Loader, EmptyState с подсказкой, ErrorState, скелетоны, баннер о результате действия), адаптив 360/375/390/414/430 px.
+
+**Реализовано (2026-09-25, ветка `feature/miniapp`):** все шесть экранов из ТЗ ходят в живой backend с первого коммита. Нюансы относительно схемы выше: фильтры — не отдельная страница `pages/Filters`, а bottom-sheet `FilterSheet` внутри `EventsList` (черновик применяется кнопкой, один тап = один запрос); события идут только через `api/client.ts`; категории берутся из `GET /api/categories` с фолбэком `shared/categories.ts`; `hint` из конверта показывается дословно; `data_origin='mock'` помечается плашкой «демо»; `POST /events/{id}/click` дёргается строго до перехода по `source_url`; deep link (`start_param` / `?query=`) применяется до первого запроса; preferences (`GET/POST /api/preferences`) применяются как стартовые фильтры и сохраняются из листа фильтров. Дизайн-план и самопроверка по чек-листу антипаттернов — в `miniapp/DESIGN.md`.
 
 **Что здесь НЕ должно находиться:** обращения к внешним афишам, доступ к БД, свой backend, захардкоженные `http://localhost` (в браузере пользователя это не сработает — только относительный `/api`).
 
