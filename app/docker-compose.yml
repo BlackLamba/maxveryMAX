@@ -1,7 +1,7 @@
 # maxveryMAX — подъём одной командой.
 #
-#   docker compose up --build        # postgres + backend (базовый сценарий)
-#   docker compose --profile full up # + worker, bot, miniapp (когда их Dockerfile готовы)
+#   docker compose up --build        # postgres + backend + seed (тестовые данные) + miniapp
+#   docker compose --profile full up # + worker (импорт событий), bot (MAX)
 #
 # Секреты — в .env (см. .env.example); в compose только заглушки по умолчанию.
 name: maxveryMAX
@@ -38,6 +38,26 @@ services:
       postgres:
         condition: service_healthy
     # миграции применяются entrypoint'ом (см. backend/Dockerfile)
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # одноразовое наполнение БД тестовыми данными при ПЕРВОМ старте (idempotent:
+  # если события уже есть — завершается нулём и ничего не трогает)
+  seed:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "scripts/seed_if_empty.py"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-maxuser}:${POSTGRES_PASSWORD:-maxpass}@postgres:5432/${POSTGRES_DB:-maxevents}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: "no"
 
   # --- Остальные сервисы: профиль "full" -------------------------------------
   # Их Dockerfile появляются у владельцев модулей (worker — Олежа, bot — Антон,
@@ -73,7 +93,6 @@ services:
       - backend
 
   miniapp:
-    profiles: ["full"]
     build:
       context: .
       dockerfile: miniapp/Dockerfile

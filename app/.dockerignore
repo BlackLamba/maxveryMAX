@@ -1,0 +1,42 @@
+# Контекст сборки — корень app/ (общий код shared/ нужен всем модулям).
+# В образы не должно попадать ничего, что пересоздаётся или содержит секреты.
+
+# VCS / IDE / ОС
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+
+# Секреты и локальные конфиги
+.env
+.env.*
+!.env.example
+
+# Python-артефакты
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node-артефакты мини-аппа (в образе ставятся заново на стадии сборки)
+miniapp/node_modules/
+miniapp/dist/
+miniapp/.vite/
+
+# Локальные базы и дампы (в контейнере БД создаётся с нуля)
+backend/dev.db
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+
+# Документация и материалы, не нужные образам
+docs/
+Аналитик/
+*.md
+!backend/README.md
+!miniapp/DESIGN.md

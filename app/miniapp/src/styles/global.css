@@ -28,6 +28,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
+  /* длинные неразрывные слова из API (названия, описания) не должны
+     выталкивать горизонтальный скролл */
+  overflow-wrap: break-word;
 }
 
 #root {

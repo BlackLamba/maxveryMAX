@@ -7,7 +7,7 @@
  * один тап = один запрос. «Сохранить для следующих подборок» —
  * POST /api/preferences (categories + price_max + radius_km).
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActiveFilters } from '@/hooks/useFilters';
 import { api } from '@/api/client';
 import { useBanner } from '@/components/BannerHost';
@@ -75,14 +75,56 @@ export function FilterSheet({ open, filters, onClose, onApply }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Esc закрывает лист (клавиатура)
+  // модальное поведение: scroll-lock, фокус внутрь, trap по Tab, Esc,
+  // возврат фокуса на кнопку-открыватель после закрытия
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!open) return;
+    openerRef.current = document.activeElement as HTMLElement | null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusables = () =>
+      Array.from(
+        sheetRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((n) => !n.hasAttribute('disabled'));
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const f = focusables();
+      if (f.length === 0) return;
+      const first = f[0];
+      const last = f[f.length - 1];
+      const active = document.activeElement;
+      const inside = sheetRef.current?.contains(active);
+      if (e.shiftKey && (!inside || active === first)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || active === last)) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+
+    const focusTimer = window.setTimeout(() => {
+      const f = focusables();
+      (f.find((n) => n.classList.contains('sheet__close')) ?? f[0])?.focus();
+    }, 60);
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = prevOverflow;
+      openerRef.current?.focus?.();
+    };
   }, [open, onClose]);
 
   const singleDay = filters.dateFrom !== null && filters.dateFrom === filters.dateTo;
@@ -112,8 +154,11 @@ export function FilterSheet({ open, filters, onClose, onApply }: Props) {
     );
   }, []);
 
-  const dropGeo = useCallback(() => {
-    setDraft((d) => ({ ...d, lat: null, lon: null, radiusKm: null }));
+  // «Весь город» снимает только ограничение радиуса, гео остаётся
+  // (контракт: radius_km без lat/lon → 400, а lat/lon без радиуса — валидно
+  // и сохраняет сортировку «Ближе»). «Задать радиус» возвращает ограничение.
+  const toggleRadius = useCallback(() => {
+    setDraft((d) => ({ ...d, radiusKm: d.radiusKm === null ? 5 : null }));
   }, []);
 
   const savePrefs = useCallback(async () => {
@@ -138,6 +183,7 @@ export function FilterSheet({ open, filters, onClose, onApply }: Props) {
   return (
     <div className="sheet-backdrop" onClick={onClose} role="presentation">
       <div
+        ref={sheetRef}
         className="sheet"
         role="dialog"
         aria-modal="true"
@@ -231,8 +277,8 @@ export function FilterSheet({ open, filters, onClose, onApply }: Props) {
             <div className="field__row">
               <span className="field__label ui">{T.filters.nearTitle}</span>
               {draft.lat !== null && (
-                <button type="button" className="link-btn caption" onClick={dropGeo}>
-                  {T.filters.radiusAny}
+                <button type="button" className="link-btn caption" onClick={toggleRadius}>
+                  {draft.radiusKm === null ? T.filters.radiusSet : T.filters.radiusAny}
                 </button>
               )}
             </div>
